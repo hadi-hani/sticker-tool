@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ستيكر | أداة البحث عن الملصقات والعناصر للفيديوهات</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --text: #1a1f36;
+    --muted: #6b7280;
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --accent: #22d3ee;
+    --border: #e5e7eb;
+    --radius: 16px;
+    --shadow: 0 10px 30px rgba(26, 31, 54, 0.08);
+  }
+  [data-theme="dark"] {
+    --bg: #0f1222;
+    --surface: #1a1f36;
+    --text: #eef0ff;
+    --muted: #9ca3af;
+    --border: #2a2f4a;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Segoe UI", Tahoma, "Noto Kufi Arabic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    transition: background .4s, color .4s;
+  }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(12px);
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; }
+  .logo { font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
+  .logo span {
+    display: grid; place-items: center; width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff; border-radius: 10px; font-size: 1.1rem;
+  }
+  .nav-links { display: flex; gap: 28px; font-weight: 600; }
+  .nav-links a { opacity: .75; transition: opacity .2s; }
+  .nav-links a:hover { opacity: 1; }
+  .theme-btn {
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); border-radius: 10px; width: 38px; height: 38px;
+    cursor: pointer; font-size: 1.1rem; transition: transform .2s;
+  }
+  .theme-btn:hover { transform: rotate(20deg); }
+
+  .hero { padding: 55px 0 35px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; inset: -40% -10% auto; height: 500px;
+    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--primary) 18%, transparent), transparent 65%);
+    pointer-events: none;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    padding: 6px 16px; border-radius: 999px; font-size: .85rem; font-weight: 600;
+  }
+  .hero h1 { font-size: clamp(1.8rem, 5vw, 2.9rem); line-height: 1.3; margin: 20px 0 12px; font-weight: 800; }
+  .grad {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { max-width: 640px; margin: 0 auto 28px; color: var(--muted); font-size: 1.05rem; }
+
+  .search-wrap { max-width: 720px; margin: 0 auto; position: relative; }
+  .search-box {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 999px; padding: 8px 8px 8px 18px;
+    box-shadow: var(--shadow); transition: border-color .2s;
+  }
+  .search-box:focus-within { border-color: var(--primary); }
+  .search-box input {
+    flex: 1; border: none; outline: none; background: transparent;
+    color: var(--text); font-size: 1.05rem; font-family: inherit; padding: 8px 0;
+  }
+  .search-box input::placeholder { color: var(--muted); }
+  .search-btn {
+    border: none; cursor: pointer; padding: 12px 26px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff; font-weight: 700; font-family: inherit; font-size: 1rem;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 40%, transparent);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .search-btn:hover { transform: translateY(-1px); }
+  .chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .chip {
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    padding: 6px 16px; border-radius: 999px; font-size: .85rem; cursor: pointer;
+    transition: all .2s; font-family: inherit;
+  }
+  .chip:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+
+  .toolbar {
+    display: flex; gap: 12px 18px; flex-wrap: wrap; align-items: center; justify-content: center;
+    margin: 28px auto 20px; max-width: 900px;
+  }
+  .field { display: flex; align-items: center; gap: 8px; }
+  .field label { font-size: .85rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .field .hint { font-size: .75rem; color: var(--muted); }
+  select, input.key-input, input[type="color"] {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    border-radius: 10px; padding: 8px 12px; font-family: inherit; font-size: .9rem; outline: none;
+  }
+  input.key-input { width: 220px; }
+  select:focus { border-color: var(--primary); }
+  input[type="color"] { padding: 4px; height: 38px; width: 46px; cursor: pointer; }
+  .hidden { display: none !important; }
+
+  .status { text-align: center; color: var(--muted); font-size: .9rem; min-height: 22px; }
+
+  .section { padding: 40px 0; }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 16px; max-width: 1000px; margin: 0 auto;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 10px; text-align: center;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px color-mix(in srgb, var(--primary) 15%, transparent); }
+  .card .preview {
+    height: 90px; display: grid; place-items: center; overflow: hidden;
+    background: repeating-conic-gradient(var(--border) 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+    border-radius: 10px;
+  }
+  .card img { max-width: 100%; max-height: 90px; object-fit: contain; }
+  .card .name { font-size: .78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; }
+  .card .actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .dl {
+    flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    border-radius: 8px; padding: 6px 4px; font-size: .72rem; cursor: pointer;
+    font-family: inherit; font-weight: 600; transition: all .2s; min-width: 0;
+  }
+  .dl:hover { border-color: var(--primary); color: var(--primary); }
+  .dl.main { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; border: none; }
+  .dl.main:hover { color: #fff; }
+
+  .empty { text-align: center; color: var(--muted); padding: 50px 20px; font-size: 1.05rem; }
+  .empty .big { font-size: 2.6rem; display: block; margin-bottom: 10px; }
+
+  .spinner {
+    width: 42px; height: 42px; margin: 30px auto; border-radius: 50%;
+    border: 4px solid var(--border); border-top-color: var(--primary);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .guide {
+    max-width: 800px; margin: 0 auto; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 34px; box-shadow: var(--shadow);
+  }
+  .guide h3 { font-size: 1.3rem; margin-bottom: 12px; }
+  .guide p { color: var(--muted); font-size: .95rem; margin-bottom: 14px; }
+  .guide ul { color: var(--muted); font-size: .95rem; margin: 0 18px 14px; }
+  .guide a { color: var(--primary); font-weight: 700; }
+  code {
+    display: block; direction: ltr; text-align: left; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+    font-size: .85rem; overflow-x: auto; margin: 10px 0;
+  }
+  .warn {
+    border-right: 4px solid #f59e0b; background: color-mix(in srgb, #f59e0b 8%, transparent);
+    padding: 10px 14px; border-radius: 8px; font-size: .85rem; color: var(--text);
+  }
+
+  footer { border-top: 1px solid var(--border); padding: 30px 0; text-align: center; color: var(--muted); font-size: .9rem; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 50%; transform: translateX(50%) translateY(80px);
+    background: var(--text); color: var(--bg); padding: 12px 22px; border-radius: 12px;
+    font-size: .9rem; opacity: 0; transition: all .35s; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .toast.show { opacity: 1; transform: translateX(50%) translateY(0); }
+
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner container">
+    <div class="logo"><span>🎬</span> ستيكر</div>
+    <div class="nav-links">
+      <a href="#tool">الأداة</a>
+      <a href="#guide">طريقة الاستخدام</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-btn" id="themeBtn" title="تبديل الوضع">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="tool">
+  <div class="container">
+    <span class="badge">✨ 3 مزودين — عناصر وستيكرات (بدون إيموجي)</span>
+    <h1>ستيكرات وعناصر معبّرة <span class="grad">للمونتاج</span></h1>
+    <p>اختر مزودًا، اكتب كلمة بالعربي أو الإنجليزي، وحمّل العنصر بصيغة شفافة جاهزة للتركيب فوق الفيديو.</p>
+
+    <div class="search-wrap">
+      <div class="search-box">
+        <input type="text" id="q" placeholder="مثال: قلب، تصفيق، سهم، fire، arrow..." autocomplete="off">
+        <button class="search-btn" id="searchBtn">بحث</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="field">
+        <label>المزود:</label>
+        <select id="source">
+          <option value="iconify" selected>Iconify — عناصر SVG (بدون مفتاح)</option>
+          <option value="klipy">Klipy — ستيكرات متحركة</option>
+          <option value="giphy">Giphy — ستيكرات متحركة</option>
+        </select>
+      </div>
+      <div class="field" id="qualityWrap">
+        <label>الصيغة:</label>
+        <select id="quality">
+          <option value="svg" selected>SVG</option>
+          <option value="png512">PNG 512×512</option>
+          <option value="png256">PNG 256×256</option>
+        </select>
+      </div>
+      <div class="field" id="colorWrap">
+        <label>اللون:</label>
+        <input type="color" id="color" value="#6366f1">
+      </div>
+      <div class="field hidden" id="klipyKeyWrap">
+        <label>مفتاح Klipy:</label>
+        <input type="text" class="key-input" id="klipyKey" placeholder="أنشئه من partner.klipy.com/api-keys">
+        <small class="hint">مفتاح الاختبار: 100 طلب/ساعة — من <a href="https://partner.klipy.com/api-keys" target="_blank" rel="noopener">partner.klipy.com/api-keys</a></small>
+      </div>
+      <div class="field hidden" id="giphyKeyWrap">
+        <label>مفتاح Giphy:</label>
+        <input type="text" class="key-input" id="giphyKey" placeholder="من developers.giphy.com">
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none">
+      <span class="big">🎬</span>
+      اكتب كلمة في الأعلى وابدأ البحث — أو جرّب أحد الاقتراحات
+    </div>
+    <div class="spinner" id="spinner" style="display:none"></div>
+  </div>
+</section>
+
+<section class="section" id="guide">
+  <div class="container">
+    <div class="guide reveal">
+      <h3>المزودون الثلاثة</h3>
+      <ul>
+        <li><strong>Iconify</strong> — 150,000+ عنصر وأيقونة SVG من 100+ مجموعة. بدون مفتاح، مع تحويل تلقائي إلى PNG شفاف بأي لون تختاره.</li>
+        <li><strong>Klipy</strong> — ستيكرات متحركة (GIF/WebP/WebM) خلف بديل Tenor. مفتاح مجاني مدى الحياة من <a href="https://klipy.com/developers" target="_blank" rel="noopener">klipy.com/developers</a> (بلا خطط مدفوعة).</li>
+        <li><strong>Giphy</strong> — ستيكرات متحركة ضخمة. مفتاح مجاني (beta) من <a href="https://developers.giphy.com" target="_blank" rel="noopener">developers.giphy.com</a>.</li>
+      </ul>
+      <p><strong>التركيب في الفيديو:</strong> بعد تنزيل العنصر، ضعه فوق الفيديو في CapCut/Premiere، أو برمجيًا عبر ffmpeg:</p>
+      <code>ffmpeg -i video.mp4 -i element.png -filter_complex \
+  "overlay=W-w-50:H-h-50:enable='between(t,5,8)'" \
+  -c:a copy output.mp4</code>
+      <p><strong>التراكب الآلي:</strong> لتحويل "الكلمة المنطوقة ← عنصر تلقائيًا": فُرّغ الفيديو بـ Whisper لاستخراج النص مع الوقت، اربط كل كلمة مفتاحية بعنصر، وركّبه عبر ffmpeg في اللحظة المحددة.</p>
+      <div class="warn">⚠️ المزودات المتحركة تخضع لحدود استخدام (Klipy: 100 طلب/ساعة بالمفتاح التجريبي ومجاني غير محدود بالإنتاج — Giphy beta: ~100 بحث/ساعة) وتتطلب إظهار «Powered by Klipy/GIPHY» عند الاستخدام العلني. Iconify لا حدود ويشترط أمانة النسب لتراخيص المجموعات.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>صُنع بحب © 2026 — ستيكر · ملف HTML واحد فقط</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ---------- Theme ---------- */
+  const themeBtn = document.getElementById('themeBtn');
+  const stored = localStorage.getItem('theme');
+  if (stored) document.documentElement.setAttribute('data-theme', stored);
+  themeBtn.textContent = stored === 'dark' ? '☀️' : '🌙';
+  themeBtn.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+    localStorage.setItem('theme', isDark ? '' : 'dark');
+    themeBtn.textContent = isDark ? '🌙' : '☀️';
+  });
+
+  /* ---------- Helpers ---------- */
+  const $ = id => document.getElementById(id);
+  const status = $('status'), grid = $('grid'), empty = $('empty'), spinner = $('spinner');
+  let toastTimer;
+
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  function showLoading(on) {
+    spinner.style.display = on ? 'block' : 'none';
+    status.textContent = on ? 'جارٍ التحميل...' : '';
+  }
+
+  function setEmpty(show) { empty.style.display = show ? 'block' : 'none'; }
+
+  function downloadUrl(url, filename) {
+    fetch(url)
+      .then(r => { if (!r.ok) throw new Error('فشل التحميل'); return r.blob(); })
+      .then(blob => saveBlob(blob, filename))
+      .catch(() => toast('تعذر تنزيل الملف'));
+  }
+
+  function saveBlob(blob, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    toast('تم تنزيل ' + filename);
+  }
+
+  function downloadDataUrl(dataUrl, filename) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('تم تنزيل ' + filename);
+  }
+
+  /* Arabic → English dictionary for search */
+  const AR_DICT = {
+    'سعيد':'happy joy smile', 'فرح':'joy happy celebrate', 'حب':'love heart', 'قلب':'heart',
+    'ضحك':'laugh laughing', 'غضب':'angry rage anger mad', 'حزين':'sad cry crying',
+    'بكاء':'cry crying tear', 'مفاجأة':'surprise shocked amazed', 'دهشة':'surprise shock',
+    'تصفيق':'clap applause', 'نجاح':'success trophy celebration medal win',
+    'احتفال':'party celebration confetti', 'شرارة':'spark sparkles', 'نار':'fire flame',
+    'مطر':'rain umbrella cloud', 'شمس':'sun sunny', 'قمر':'moon night', 'نجم':'star',
+    'ضوء':'light bulb lamp', 'فكرة':'idea lightbulb thinking bulb', 'قوة':'strong muscle flex',
+    'خوف':'afraid fear scared scream', 'نوم':'sleep sleepy tired', 'جوع':'hungry food',
+    'طعام':'food pizza burger eat', 'قهوة':'coffee cup tea', 'ماء':'water drink glass',
+    'عين':'eye eyes', 'يد':'hand hands pointing wave', 'تحية':'wave hello hi',
+    'سلام':'peace hand', 'وداع':'bye wave farewell', 'موافق':'ok yes check thumbsup',
+    'خطأ':'wrong no x cross forbidden', 'صحيح':'check correct yes', 'انتباه':'warning alert attention',
+    'حيوان':'animal cat dog bird', 'قطة':'cat', 'كلب':'dog', 'طائر':'bird',
+    'سيارة':'car automobile taxi', 'هاتف':'phone mobile call', 'حاسوب':'computer laptop',
+    'عمل':'work briefcase office', 'سفر':'travel airplane plane luggage', 'جبل':'mountain',
+    'بحر':'sea ocean wave beach', 'زهرة':'flower blossom rose', 'ورقة':'leaf plant tree',
+    'ذكي':'smart genius brain', 'طبيب':'doctor hospital medical', 'غناء':'sing music microphone',
+    'موسيقى':'music note guitar headphone', 'كرة':'ball soccer football', 'جري':'run running',
+    'رقص':'dance dancing party', 'بطل':'hero victory winner', 'دموع':'tear cry laughing',
+    'تركيز':'focus target bullseye',
+    'سهم':'arrow arrow-right arrow-left arrow-up arrow-down', 'دائرة':'circle round',
+    'مربع':'square box', 'شكل':'shape', 'إطار':'frame border', 'حدود':'border frame',
+    'خط':'line stroke', 'علامة':'check tick mark', 'صح':'check', 'نجمة':'star sparkle',
+    'تاج':'crown', 'لافتة':'banner ribbon', 'سحابة':'cloud', 'برق':'bolt lightning zap',
+    'هدية':'gift present', 'شعار':'logo badge', 'إبهام':'thumbsup thumb', 'مؤشر':'pointer cursor click',
+    'جرس':'bell notification', 'فوز':'trophy win award medal', 'ميدالية':'medal award',
+    'خريطة':'map location pin', 'قفل':'lock security', 'إعدادات':'settings gear cog',
+    'منزل':'home house', 'بحث':'search magnifier zoom', 'إضافة':'plus add', 'حذف':'trash delete',
+    'تنزيل':'download', 'رفع':'upload', 'تشغيل':'play video', 'إيقاف':'pause stop',
+    'تسجيل':'record video camera', 'كاميرا':'camera video', 'بث':'broadcast live',
+    'تعليق':'comment chat message', 'مشاركة':'share social', 'لايك':'like heart thumb',
+    'زر':'button cursor', 'فلتر':'filter', 'تحرير':'edit pen pencil', 'قلم':'pen pencil draw',
+    'رسم':'paint palette draw', 'فرشاة':'brush paint', 'شريط':'bar chart graph',
+    'رسم بياني':'chart graph bar', 'أرقام':'number count', 'نسبة':'percent percent',
+    'مبلغ':'money cash dollar coin', 'عملة':'coin money dollar', 'ساعة':'clock time watch',
+    'تاريخ':'calendar date', 'يوم':'day sun', 'صورة':'image picture photo',
+    'فيديو':'video play film', 'كلمة':'text type letter', 'حرف':'text letter abc',
+    'وسام':'badge medal award', 'سيف':'sword', 'درع':'shield armor',
+    'جائزة':'award prize trophy', 'علم':'flag banner', 'منصة':'rocket launch',
+    'صاروخ':'rocket launch', 'حلزوني':'spiral', 'موجة':'wave sound audio',
+    'صوت':'sound audio volume speaker', 'مكبر':'volume speaker sound', 'كتم':'mute speaker off'
+  };
+
+  function isArabic(s) { return /[\u0600-\u06FF]/.test(s); }
+
+  function toEnglish(query) {
+    if (!isArabic(query)) return [query];
+    const out = new Set();
+    for (const [ar, en] of Object.entries(AR_DICT)) if (query.includes(ar)) en.split(' ').forEach(w => out.add(w));
+    if (!out.size) out.add(query);
+    return [...out];
+  }
+
+  /* ---------- Provider 1: Iconify (no key) ---------- */
+  const ICONIFY_SEARCH = 'https://api.iconify.design/search?query={Q}&limit=60';
+  const ICONIFY_SVG = 'https://api.iconify.design/{ICON}.svg?color={C}';
+  let iconifyCache = {};
+
+  async function searchIconify(query) {
+    const terms = toEnglish(query);
+    for (const t of terms) {
+      const q = t.toLowerCase();
+      if (iconifyCache[q]) return iconifyCache[q];
+      const res = await fetch(ICONIFY_SEARCH.replace('{Q}', encodeURIComponent(q)));
+      if (!res.ok) throw new Error('فشل الاتصال بـ Iconify');
+      const data = await res.json();
+      iconifyCache[q] = data.icons;
+    }
+    return iconifyCache[terms[0].toLowerCase()] || [];
+  }
+
+  async function svgToPng(svgUrl, size) {
+    const blob = await (await fetch(svgUrl)).blob();
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = new Image();
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, size, size);
+      return canvas.toDataURL('image/png');
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  function renderIconify(icons) {
+    const color = encodeURIComponent($('color').value);
+    const quality = $('quality').value;
+    setEmpty(false);
+    grid.innerHTML = icons.map(icon => {
+      const svgUrl = ICONIFY_SVG.replace('{ICON}', icon).replace('{C}', color);
+      const name = icon.replace(':', '-');
+      const btns = {
+        'svg': `<button class="dl main" data-kind="url" data-href="${svgUrl}" data-name="iconify-${name}.svg">SVG</button>
+                <button class="dl" data-kind="png" data-href="${svgUrl}" data-name="iconify-${name}-512.png" data-size="512">PNG 512</button>
+                <button class="dl" data-kind="png" data-href="${svgUrl}" data-name="iconify-${name}-256.png" data-size="256">PNG 256</button>`,
+        'png512': `<button class="dl main" data-kind="png" data-href="${svgUrl}" data-name="iconify-${name}-512.png" data-size="512">PNG 512</button>
+                   <button class="dl" data-kind="url" data-href="${svgUrl}" data-name="iconify-${name}.svg">SVG</button>
+                   <button class="dl" data-kind="png" data-href="${svgUrl}" data-name="iconify-${name}-256.png" data-size="256">PNG 256</button>`,
+        'png256': `<button class="dl main" data-kind="png" data-href="${svgUrl}" data-name="iconify-${name}-256.png" data-size="256">PNG 256</button>
+                   <button class="dl" data-kind="url" data-href="${svgUrl}" data-name="iconify-${name}.svg">SVG</button>
+                   <button class="dl" data-kind="png" data-href="${svgUrl}" data-name="iconify-${name}-512.png" data-size="512">PNG 512</button>`
+      };
+      return `<div class="card">
+        <div class="preview"><img src="${svgUrl}" alt="${icon}" loading="lazy"></div>
+        <div class="name" title="${icon}">${icon}</div>
+        <div class="actions">${btns[quality]}</div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.dl').forEach(b => {
+      b.addEventListener('click', () => {
+        if (b.dataset.kind === 'png') {
+          toast('جاري تحويل SVG إلى PNG...');
+          svgToPng(b.dataset.href, +b.dataset.size).then(d => downloadDataUrl(d, b.dataset.name)).catch(() => toast('تعذر تحويل SVG'));
+        } else {
+          downloadUrl(b.dataset.href, b.dataset.name);
+        }
+      });
+    });
+    status.textContent = icons.length + ' عنصر';
+  }
+
+  /* ---------- Provider 2: Klipy ---------- */
+  async function searchKlipy(query) {
+    const key = $('klipyKey').value.trim();
+    if (!key) {
+      status.textContent = '⚠️ أدخل مفتاح Klipy المجاني في شريط الأدوات أولًا';
+      setEmpty(true); grid.innerHTML = '';
+      return;
+    }
+    const url = `https://api.klipy.com/api/v1/${encodeURIComponent(key)}/stickers/search?q=${encodeURIComponent(query)}&per_page=40`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('فشل الاتصال بـ Klipy (تحقق من المفتاح — التجريبي 100 طلب/ساعة)');
+    const data = await res.json();
+    const items = (data.data && data.data.data) || [];
+    setEmpty(false);
+    grid.innerHTML = items.map(r => {
+      const f = r.file || {};
+      const gifHd = f.hd && f.hd.gif && f.hd.gif.url;
+      const pngHd = f.hd && f.hd.png && f.hd.png.url;
+      const prev = (f.sm && f.sm.gif && f.sm.gif.url) || (f.md && f.md.gif && f.md.gif.url) || gifHd;
+      const slug = (r.slug || r.id).replace(/[^\w-]+/g, '_');
+      return `<div class="card">
+        <div class="preview">${prev ? `<img src="${prev}" loading="lazy">` : ''}</div>
+        <div class="name" title="${r.title || ''}">${r.title || r.id}</div>
+        <div class="actions">
+          ${gifHd ? `<button class="dl main" data-href="${gifHd}" data-name="klipy-${slug}.gif">GIF</button>` : ''}
+          ${pngHd ? `<button class="dl" data-href="${pngHd}" data-name="klipy-${slug}.png">PNG</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.dl').forEach(b => b.addEventListener('click', () => downloadUrl(b.dataset.href, b.dataset.name)));
+    status.textContent = items.length + ' ستيكر — أضف «Powered by Klipy» عند الاستخدام العلني';
+  }
+
+  /* ---------- Provider 3: Giphy ---------- */
+  async function searchGiphy(query) {
+    const key = $('giphyKey').value.trim();
+    if (!key) {
+      status.textContent = '⚠️ أدخل مفتاح Giphy المجاني (beta) في شريط الأدوات أولًا';
+      setEmpty(true); grid.innerHTML = '';
+      return;
+    }
+    const url = `https://api.giphy.com/v1/stickers/search?api_key=${encodeURIComponent(key)}&q=${encodeURIComponent(query)}&limit=30&rating=pg`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('فشل الاتصال بـ Giphy (تحقق من المفتاح — beta حدود ~100 بحث/ساعة)');
+    const data = await res.json();
+    setEmpty(false);
+    grid.innerHTML = data.data.map(g => {
+      const im = g.images;
+      const gif = im.original && im.original.url;
+      const small = (im.fixed_width_small || im.preview_gif || gif);
+      const mp4 = im.original && im.original.mp4;
+      const slug = (g.slug || g.id).replace(/[^\w-]+/g, '_');
+      return `<div class="card">
+        <div class="preview"><img src="${small.url || small}" loading="lazy"></div>
+        <div class="name" title="${g.title || ''}">${g.id}</div>
+        <div class="actions">
+          <button class="dl main" data-href="${gif}" data-name="giphy-${slug}.gif">GIF</button>
+          ${mp4 ? `<button class="dl" data-href="${mp4}" data-name="giphy-${slug}.mp4">MP4</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.dl').forEach(b => b.addEventListener('click', () => downloadUrl(b.dataset.href, b.dataset.name)));
+    status.textContent = data.data.length + ' ستيكر — أضف «Powered by GIPHY» عند الاستخدام العلني';
+  }
+
+  /* ---------- Run search ---------- */
+  async function doSearch() {
+    const query = $('q').value.trim();
+    const source = $('source').value;
+    if (!query) { toast('اكتب كلمة للبحث أولًا'); return; }
+    setEmpty(false); grid.innerHTML = '';
+    showLoading(true);
+    try {
+      if (source === 'iconify') {
+        renderIconify(await searchIconify(query));
+      } else if (source === 'klipy') {
+        await searchKlipy(query);
+      } else {
+        await searchGiphy(query);
+      }
+    } catch (err) {
+      status.textContent = err.message;
+      toast('حدث خطأ: ' + err.message);
+    }
+    showLoading(false);
+  }
+
+  $('searchBtn').addEventListener('click', doSearch);
+  $('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+  $('source').addEventListener('change', () => {
+    const s = $('source').value;
+    $('klipyKeyWrap').classList.toggle('hidden', s !== 'klipy');
+    $('giphyKeyWrap').classList.toggle('hidden', s !== 'giphy');
+    $('qualityWrap').classList.toggle('hidden', s !== 'iconify');
+    $('colorWrap').classList.toggle('hidden', s !== 'iconify');
+    grid.innerHTML = ''; setEmpty(true); status.textContent = '';
+  });
+
+  const chips = ['قلب', 'تصفيق', 'نجاح', 'سهم', 'فكرة', 'انتباه', 'برق', 'تاج', 'لايك', 'fire', 'arrow', 'star'];
+  $('chips').innerHTML = chips.map(c => `<button class="chip">${c}</button>`).join('');
+  document.querySelectorAll('.chip').forEach(ch => {
+    ch.addEventListener('click', () => { $('q').value = ch.textContent; doSearch(); });
+  });
+
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
